@@ -24,21 +24,32 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-
-    is_exit_file(&args.input); //inputが存在するか確認
-    is_wav_file(&args.input); //inputがwavファイルか確認
+    let input = args.input;
+    is_exit_file(&input); //inputが存在するか確認
+    is_wav_file(&input); //inputがwavファイルか確認
+    let input = input.canonicalize().unwrap(); //絶対パスに変換
 
     // exportフォルダを作成
-    let export_path = create_export_folder(&args.input);
+    let mut export_path = create_export_folder(&input);
     println!(
         "Export folder: {}",
         export_path.canonicalize().unwrap().display()
     );
 
-    let output = Command::new("pwd").output().expect("failed");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
-    println!("");
-    let output = Command::new("ls").args(&["-a"]).output().expect("failed");
+    export_path.push("out.wav");
+    println!("Export file: {}", export_path.display());
+
+    let output = Command::new("sox")
+        .args(&[
+            input.as_os_str().to_str().unwrap(),
+            export_path.as_os_str().to_str().unwrap(),
+            "trim",
+            "10s",
+            "20s",
+        ])
+        .output()
+        .expect("failed");
+    println!("{:?}", output);
     println!("{}", String::from_utf8_lossy(&output.stdout));
 }
 
