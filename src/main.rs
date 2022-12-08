@@ -8,6 +8,15 @@ use std::process::Command;
 struct Args {
     input: std::path::PathBuf,
 
+    #[arg(short, long, default_value = "0")]
+    start: u32,
+
+    #[arg(short, long, default_value = "100")]
+    length: u32,
+
+    #[arg(long, default_value = "10")]
+    interval: u32,
+
     /// Name of the person to greet
     #[arg(short, long)]
     name: Option<String>,
@@ -16,19 +25,11 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut export_path = PathBuf::from(args.input.clone());
-    export_path.pop();
-    export_path.push("export");
-    let metadata = args.input.clone().metadata().unwrap();
-    assert_eq!(false, metadata.permissions().readonly());
+    is_exit_file(&args.input); //inputが存在するか確認
+    is_wav_file(&args.input); //inputがwavファイルか確認
 
-    if !export_path.exists() {
-        match fs::create_dir(export_path.as_path()) {
-            Err(e) => eprintln!("Failed on create \"export\" dir : {}", e),
-            Ok(_) => {}
-        }
-    }
-
+    // exportフォルダを作成
+    let export_path = create_export_folder(&args.input);
     println!(
         "Export folder: {}",
         export_path.canonicalize().unwrap().display()
@@ -39,4 +40,50 @@ fn main() {
     println!("");
     let output = Command::new("ls").args(&["-a"]).output().expect("failed");
     println!("{}", String::from_utf8_lossy(&output.stdout));
+}
+
+fn create_export_folder(path: &PathBuf) -> PathBuf {
+    let mut export_path = PathBuf::from(path.clone());
+    export_path.pop();
+    export_path.push("export");
+    let metadata = path.clone().metadata().unwrap();
+    assert_eq!(false, metadata.permissions().readonly());
+
+    if !export_path.exists() {
+        match fs::create_dir(export_path.as_path()) {
+            Err(e) => eprintln!("Failed on create \"export\" dir : {}", e),
+            Ok(_) => {}
+        }
+    }
+    export_path
+}
+
+/// Pathで示されたファイルが存在するか
+fn is_exit_file(path: &PathBuf) {
+    if !path.exists() {
+        eprintln!("{} is not found", path.display());
+        std::process::exit(1);
+    }
+}
+
+/// Pathがwavファイルかどうか
+fn is_wav_file(path: &PathBuf) {
+    match path.extension() {
+        Some(x) => {
+            if x.is_empty() {
+                eprintln!("Input file extension is must to be \"wav\"");
+                std::process::exit(1);
+            }
+
+            match x.to_str().unwrap() {
+                "wav" => {}
+                "WAV" => {}
+                _ => {
+                    eprintln!("Input file extension is must to be \"wav\"");
+                    std::process::exit(1);
+                }
+            }
+        }
+        None => {}
+    }
 }
