@@ -1,4 +1,5 @@
 use clap::Parser;
+use hound;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -28,6 +29,10 @@ fn main() {
     is_exit_file(&input); //inputが存在するか確認
     is_wav_file(&input); //inputがwavファイルか確認
     let input = input.canonicalize().unwrap(); //絶対パスに変換
+
+    let reader = hound::WavReader::open(input.clone()).unwrap();
+    let num_samples = reader.duration();
+    println!("Number of samples per channel: {}", num_samples);
 
     // exportフォルダを作成
     let mut export_path = create_export_folder(&input);
