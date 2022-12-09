@@ -57,7 +57,10 @@ fn main() {
             break;
         }
 
-        ex.push(format!("out{}.wav", count));
+        ex.push(format!(
+            "out{:03}_start{}_len{}.wav",
+            count, start_sample, args.length
+        ));
         let output = Command::new("sox")
             .args(&[
                 input.as_os_str().to_str().unwrap(),
