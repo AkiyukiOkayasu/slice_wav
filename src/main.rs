@@ -25,10 +25,12 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let input = args.input;
+    let input = args.input.clone();
     is_exit_file(&input); //inputが存在するか確認
     is_wav_file(&input); //inputがwavファイルか確認
     let input = input.canonicalize().unwrap(); //絶対パスに変換
+    let input_filename = args.input.clone();
+    let input_filename = input_filename.file_stem().unwrap().to_str().unwrap();
 
     let reader = hound::WavReader::open(input.clone()).unwrap();
     let num_samples = reader.duration();
@@ -58,8 +60,8 @@ fn main() {
         }
 
         ex.push(format!(
-            "out{:03}_start{}_len{}.wav",
-            count, start_sample, args.length
+            "{}_sliced{:03}_start{}_len{}.wav",
+            input_filename, count, start_sample, args.length
         ));
         let output = Command::new("sox")
             .args(&[
