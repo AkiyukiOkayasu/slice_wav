@@ -34,7 +34,6 @@ fn main() {
 
     let reader = hound::WavReader::open(input.clone()).unwrap();
     let num_samples = reader.duration();
-    println!("Number of samples per channel: {}", num_samples);
 
     // exportフォルダを作成
     let export_path = create_export_folder(&input);
@@ -47,7 +46,6 @@ fn main() {
         Some(x) => x,
         None => args.length,
     };
-    dbg!(interval);
 
     let mut count = 0;
     loop {
@@ -63,6 +61,7 @@ fn main() {
             "{}_sliced{:03}_start{}_len{}.wav",
             input_filename, count, start_sample, args.length
         ));
+        println!("{}", ex.display());
         let output = Command::new("sox")
             .args(&[
                 input.as_os_str().to_str().unwrap(),
@@ -73,8 +72,7 @@ fn main() {
             ])
             .output()
             .expect("failed");
-        println!("{:?}", output);
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        eprintln!("{}", String::from_utf8_lossy(&output.stderr));
 
         count += 1;
     }
