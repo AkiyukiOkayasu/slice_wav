@@ -7,18 +7,18 @@ use std::process::Command;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input WAV file to slice.
+    /// Input WAV file to slice
     input: std::path::PathBuf,
 
-    /// Start position in samples. Default is 0.
+    /// Start position in samples.
     #[arg(short, long, default_value = "0")]
     start: u32,
 
-    /// Length of the exported WAV file in samples.
+    /// Length of the exported WAV file in samples
     #[arg(short, long)]
     length: u32,
 
-    /// Interval to slice in samples.
+    /// Interval to slice in samples [default: Length]
     #[arg(long)]
     interval: Option<u32>,
 }
