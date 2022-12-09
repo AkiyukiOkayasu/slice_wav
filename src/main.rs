@@ -1,5 +1,6 @@
 use clap::Parser;
 use hound;
+use std::fmt::format;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -7,20 +8,20 @@ use std::process::Command;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// Input WAV file to slice.
     input: std::path::PathBuf,
 
+    /// Start position in samples. Default is 0.
     #[arg(short, long, default_value = "0")]
     start: u32,
 
-    #[arg(short, long, default_value = "100")]
+    /// Length of the exported WAV file in samples.
+    #[arg(short, long)]
     length: u32,
 
-    #[arg(long, default_value = "10")]
-    interval: u32,
-
-    /// Name of the person to greet
-    #[arg(short, long)]
-    name: Option<String>,
+    /// Interval to slice in samples.
+    #[arg(long)]
+    interval: Option<u32>,
 }
 
 fn main() {
@@ -41,21 +42,43 @@ fn main() {
         export_path.canonicalize().unwrap().display()
     );
 
-    export_path.push("out.wav");
-    println!("Export file: {}", export_path.display());
+    // export_path.push("out.wav");
+    // println!("Export file: {}", export_path.display());
 
-    let output = Command::new("sox")
-        .args(&[
-            input.as_os_str().to_str().unwrap(),
-            export_path.as_os_str().to_str().unwrap(),
-            "trim",
-            "10s",
-            "20s",
-        ])
-        .output()
-        .expect("failed");
-    println!("{:?}", output);
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    let interval = match args.interval {
+        Some(x) => x,
+        None => args.length,
+    };
+    dbg!(interval);
+
+    let mut count = 0;
+    loop {
+        let mut ex = export_path.clone();
+        let start_sample = args.start + interval * count;
+        let end_sample = start_sample + args.length;
+        dbg!(start_sample);
+        dbg!(end_sample);
+
+        if end_sample > num_samples {
+            break;
+        }
+
+        ex.push(format!("out{}.wav", count));
+        let output = Command::new("sox")
+            .args(&[
+                input.as_os_str().to_str().unwrap(),
+                ex.as_os_str().to_str().unwrap(),
+                "trim",
+                &format!("{}s", start_sample),
+                &format!("{}s", args.length),
+            ])
+            .output()
+            .expect("failed");
+        println!("{:?}", output);
+        println!("{}", String::from_utf8_lossy(&output.stdout));
+
+        count += 1;
+    }
 }
 
 fn create_export_folder(path: &PathBuf) -> PathBuf {
