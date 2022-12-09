@@ -1,6 +1,5 @@
 use clap::Parser;
 use hound;
-use std::fmt::format;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -36,14 +35,11 @@ fn main() {
     println!("Number of samples per channel: {}", num_samples);
 
     // exportフォルダを作成
-    let mut export_path = create_export_folder(&input);
+    let export_path = create_export_folder(&input);
     println!(
         "Export folder: {}",
         export_path.canonicalize().unwrap().display()
     );
-
-    // export_path.push("out.wav");
-    // println!("Export file: {}", export_path.display());
 
     let interval = match args.interval {
         Some(x) => x,
@@ -56,8 +52,6 @@ fn main() {
         let mut ex = export_path.clone();
         let start_sample = args.start + interval * count;
         let end_sample = start_sample + args.length;
-        dbg!(start_sample);
-        dbg!(end_sample);
 
         if end_sample > num_samples {
             break;
@@ -81,6 +75,7 @@ fn main() {
     }
 }
 
+/// 出力先フォルダを作成
 fn create_export_folder(path: &PathBuf) -> PathBuf {
     let mut export_path = PathBuf::from(path.clone());
     export_path.pop();
